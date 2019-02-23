@@ -1,48 +1,76 @@
 # Prerequisites
 
-## Google Cloud Platform
+## KVM
 
-This tutorial leverages the [Google Cloud Platform](https://cloud.google.com/) to streamline provisioning of the compute infrastructure required to bootstrap a Kubernetes cluster from the ground up. [Sign up](https://cloud.google.com/free/) for $300 in free credits.
+This tutorial leverages KVM. So you need to have a linux machine on which KVM is installed and running.
 
-[Estimated cost](https://cloud.google.com/products/calculator/#id=78df6ced-9c50-48f8-a670-bc5003f2ddaa) to run this tutorial: $0.22 per hour ($5.39 per day).
+The following KVM-related tools will be used frequently:
 
-> The compute resources required for this tutorial exceed the Google Cloud Platform free tier.
+* [Virtual Machine Manager](https://virt-manager.org/): used to create VMs and Networks.
+* [qemu-img](https://qemu.weilnetz.de/doc/qemu-doc.html#disk_005fimages): used to create [image files](https://people.gnome.org/~markmc/qcow-image-format-version-1.html).
 
-## Google Cloud Platform SDK
+In this tutorial, [openSUSE Tumbleweed](https://en.opensuse.org/Portal:Tumbleweed) will be used as host PC, but in most cases there should be no problem caused by specific distributions or libvirt versions.
 
-### Install the Google Cloud SDK
-
-Follow the Google Cloud SDK [documentation](https://cloud.google.com/sdk/) to install and configure the `gcloud` command line utility.
-
-Verify the Google Cloud SDK version is 218.0.0 or higher:
+Currently, I use the following packages:
 
 ```
-gcloud version
+# cat /etc/os-release
+NAME="openSUSE Tumbleweed"
+# VERSION="20190201"
+ID="opensuse-tumbleweed"
+ID_LIKE="opensuse suse"
+VERSION_ID="20190201"
+PRETTY_NAME="openSUSE Tumbleweed"
+ANSI_COLOR="0;32"
+CPE_NAME="cpe:/o:opensuse:tumbleweed:20190201"
+BUG_REPORT_URL="https://bugs.opensuse.org"
+HOME_URL="https://www.opensuse.org/"
+# rpm -qa | grep qemu
+qemu-ui-sdl-3.1.0-2.4.x86_64
+qemu-ovmf-x86_64-2018+git1542164568.85588389222a-3.2.noarch
+qemu-sgabios-8-2.4.noarch
+qemu-vgabios-1.12.0-2.4.noarch
+qemu-ui-curses-3.1.0-2.4.x86_64
+qemu-block-rbd-3.1.0-2.4.x86_64
+qemu-x86-3.1.0-2.4.x86_64
+qemu-ipxe-1.0.0+-2.4.noarch
+qemu-seabios-1.12.0-2.4.noarch
+qemu-block-curl-3.1.0-2.4.x86_64
+libvirt-daemon-qemu-4.10.0-2.2.x86_64
+qemu-ui-gtk-3.1.0-2.4.x86_64
+libvirt-daemon-driver-qemu-4.10.0-2.2.x86_64
+qemu-tools-3.1.0-2.4.x86_64
+qemu-ksm-3.1.0-2.4.x86_64
+qemu-block-ssh-3.1.0-2.4.x86_64
+qemu-3.1.0-2.4.x86_64
+#
+#
+# rpm -qa | grep libvirt
+libvirt-daemon-driver-nodedev-4.10.0-2.2.x86_64
+libvirt-daemon-driver-storage-4.10.0-2.2.x86_64
+libvirt-libs-4.10.0-2.2.x86_64
+libvirt-daemon-driver-storage-core-4.10.0-2.2.x86_64
+libvirt-daemon-driver-storage-disk-4.10.0-2.2.x86_64
+libvirt-daemon-driver-storage-iscsi-direct-4.10.0-2.2.x86_64
+libvirt-daemon-driver-nwfilter-4.10.0-2.2.x86_64
+libvirt-daemon-4.10.0-2.2.x86_64
+libvirt-glib-1_0-0-2.0.0-1.1.x86_64
+libvirt-daemon-driver-storage-gluster-4.10.0-2.2.x86_64
+libvirt-daemon-config-network-4.10.0-2.2.x86_64
+libvirt-daemon-driver-interface-4.10.0-2.2.x86_64
+libvirt-daemon-driver-storage-logical-4.10.0-2.2.x86_64
+libvirt-daemon-qemu-4.10.0-2.2.x86_64
+libvirt-daemon-driver-network-4.10.0-2.2.x86_64
+libvirt-daemon-driver-secret-4.10.0-2.2.x86_64
+libvirt-daemon-driver-storage-scsi-4.10.0-2.2.x86_64
+libvirt-daemon-driver-qemu-4.10.0-2.2.x86_64
+python3-libvirt-python-4.10.0-1.2.x86_64
+libvirt-daemon-driver-storage-iscsi-4.10.0-2.2.x86_64
+libvirt-daemon-driver-storage-mpath-4.10.0-2.2.x86_64
+libvirt-client-4.10.0-2.2.x86_64
+libvirt-daemon-driver-storage-rbd-4.10.0-2.2.x86_64
+#
 ```
-
-### Set a Default Compute Region and Zone
-
-This tutorial assumes a default compute region and zone have been configured.
-
-If you are using the `gcloud` command-line tool for the first time `init` is the easiest way to do this:
-
-```
-gcloud init
-```
-
-Otherwise set a default compute region:
-
-```
-gcloud config set compute/region us-west1
-```
-
-Set a default compute zone:
-
-```
-gcloud config set compute/zone us-west1-c
-```
-
-> Use the `gcloud compute zones list` command to view additional regions and zones.
 
 ## Running Commands in Parallel with tmux
 
@@ -52,6 +80,11 @@ gcloud config set compute/zone us-west1-c
 
 ![tmux screenshot](images/tmux-screenshot.png)
 
-> Enable `synchronize-panes`: `ctrl+b` then `shift :`. Then type `set synchronize-panes on` at the prompt. To disable synchronization: `set synchronize-panes off`.
+If you want to setup tmux like above, `ctrl+b` -> `"` twice, then `ctrl+b` -> `alt+2`.
 
-Next: [Installing the Client Tools](02-client-tools.md)
+You can move to another window by `ctrl+b`, then an arrow key where you want to move.
+
+> Enable `synchronize-panes`: `ctrl+b` then `shift :`. Then type `set synchronize-panes on` at the prompt. To disable synchronization: `set synchronize-panes off`.
+>
+
+Next: [Provisioning Compute Resources](02-compute-resources.md)
