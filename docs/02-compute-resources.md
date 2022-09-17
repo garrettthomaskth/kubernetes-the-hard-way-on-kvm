@@ -56,9 +56,9 @@ Create three virtual instances which will host the Kubernetes control plane:
 2. Create images for Kubernetes controllers backed by the base image:
 
 ```
-# qemu-img create -f qcow2 -b ubuntu-xenial.qcow2 ubuntu-xenial-controller-1.qcow2
-# qemu-img create -f qcow2 -b ubuntu-xenial.qcow2 ubuntu-xenial-controller-2.qcow2
-# qemu-img create -f qcow2 -b ubuntu-xenial.qcow2 ubuntu-xenial-controller-3.qcow2
+# qemu-img create -f qcow2 -F qcow2 -b ubuntu-xenial.qcow2 ubuntu-xenial-controller-1.qcow2
+# qemu-img create -f qcow2 -F qcow2 -b ubuntu-xenial.qcow2 ubuntu-xenial-controller-2.qcow2
+# qemu-img create -f qcow2 -F qcow2 -b ubuntu-xenial.qcow2 ubuntu-xenial-controller-3.qcow2
 ```
 
 (Using each image created above, repeat from 3. to 7..)
